@@ -1,0 +1,6 @@
+opencv-python-headless
+flask
+flask-socketio
+ultralytics
+python-socketio
+eventlet

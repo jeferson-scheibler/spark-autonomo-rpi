@@ -1,0 +1,6 @@
+opencv-python-headless
+pyserial
+pynmea2
+RPi.GPIO
+python-socketio[client]
+websocket-client

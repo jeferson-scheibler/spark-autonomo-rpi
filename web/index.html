@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Carrinho - Painel</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #111; color: #eee; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; }
+    header { padding: 10px 20px; background: #1a1a1a; border-bottom: 1px solid #333; display: flex; align-items: center; gap: 20px; }
+    header h1 { font-size: 16px; font-weight: 500; color: #aaa; }
+    .badge { font-size: 12px; padding: 3px 10px; border-radius: 20px; background: #222; border: 1px solid #444; color: #aaa; }
+    .badge.online { border-color: #2d6a2d; color: #4caf50; background: #1a2e1a; }
+    .painel { display: flex; flex: 1; overflow: hidden; }
+    .video-col { display: flex; flex-direction: column; width: 400px; min-width: 300px; border-right: 1px solid #222; }
+    .video-col img { width: 100%; aspect-ratio: 4/3; object-fit: cover; background: #000; display: block; }
+    .info-box { padding: 12px 16px; background: #1a1a1a; border-top: 1px solid #222; font-size: 13px; }
+    .info-box .label { color: #666; font-size: 11px; margin-bottom: 2px; }
+    .info-box .valor { color: #eee; font-size: 14px; font-weight: 500; }
+    .info-row { display: flex; gap: 16px; margin-top: 10px; }
+    .info-item { flex: 1; }
+    #mapa { flex: 1; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Painel do Carrinho</h1>
+    <span class="badge online" id="status-gps">GPS ativo</span>
+    <span class="badge" id="status-sats">0 satelites</span>
+    <span class="badge" id="status-alt">Alt: --</span>
+  </header>
+  <div class="painel">
+    <div class="video-col">
+      <img src="/stream" alt="Camera"/>
+      <div class="info-box">
+        <div class="label">Posicao atual</div>
+        <div class="valor" id="coord">Aguardando GPS...</div>
+        <div class="info-row">
+          <div class="info-item">
+            <div class="label">Satelites</div>
+            <div class="valor" id="sats">--</div>
+          </div>
+          <div class="info-item">
+            <div class="label">Altitude</div>
+            <div class="valor" id="alt">--</div>
+          </div>
+          <div class="info-item">
+            <div class="label">Velocidade</div>
+            <div class="valor" id="vel">--</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="mapa"></div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script>
+    const mapa = L.map('mapa').setView([-29.4445, -51.9547], 17);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap',
+      maxZoom: 19
+    }).addTo(mapa);
+
+    const icone = L.divIcon({
+      className: '',
+      html: '<div style="width:14px;height:14px;background:#4caf50;border:2px solid #fff;border-radius:50%;box-shadow:0 0 6px #4caf50"></div>',
+      iconAnchor: [7, 7]
+    });
+
+    let marcador = null;
+    let trilha = [];
+    let linha = L.polyline([], { color: '#4caf50', weight: 2, opacity: 0.7 }).addTo(mapa);
+    let primeiroPonto = true;
+
+    const socket = io();
+
+    socket.on('gps', function(data) {
+      const lat = data.latitude;
+      const lon = data.longitude;
+
+      document.getElementById('coord').textContent = lat.toFixed(6) + ', ' + lon.toFixed(6);
+      document.getElementById('sats').textContent = data.satelites || '--';
+      document.getElementById('alt').textContent = data.altitude ? data.altitude + ' m' : '--';
+      document.getElementById('vel').textContent = data.velocidade ? data.velocidade + ' km/h' : '--';
+      document.getElementById('status-sats').textContent = (data.satelites || '--') + ' satelites';
+      document.getElementById('status-alt').textContent = 'Alt: ' + (data.altitude ? data.altitude + ' m' : '--');
+
+      if (marcador) {
+        marcador.setLatLng([lat, lon]);
+      } else {
+        marcador = L.marker([lat, lon], { icon: icone }).addTo(mapa);
+      }
+
+      trilha.push([lat, lon]);
+      linha.setLatLngs(trilha);
+
+      if (primeiroPonto) {
+        mapa.setView([lat, lon], 17);
+        primeiroPonto = false;
+      }
+    });
+  </script>
+</body>
+</html>
