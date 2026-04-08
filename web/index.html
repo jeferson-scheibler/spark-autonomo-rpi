@@ -28,6 +28,7 @@
     <span class="badge online" id="status-gps">GPS ativo</span>
     <span class="badge" id="status-sats">0 satelites</span>
     <span class="badge" id="status-alt">Alt: --</span>
+    <span class="badge" id="status-gesto">Gesto: --</span>
   </header>
   <div class="painel">
     <div class="video-col">
@@ -75,6 +76,13 @@
     let primeiroPonto = true;
 
     const socket = io();
+
+    socket.on('gesto', function(data) {
+     document.getElementById('status-gesto').textContent = 'Gesto: ' + data.comando;
+     setTimeout(() => {
+        document.getElementById('status-gesto').textContent = 'Gesto: --';
+     }, 2000);
+    });
 
     socket.on('gps', function(data) {
       const lat = data.latitude;

@@ -1,0 +1,12 @@
+# Modelos de ML (muito grandes para o git)
+*.pt
+*.onnx
+*.weights
+
+# Ambiente virtual
+venv/
+__pycache__/
+*.pyc
+
+# Arquivos de log
+*.log
